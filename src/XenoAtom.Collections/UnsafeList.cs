@@ -2,19 +2,14 @@
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
+using System;
 using System.Collections;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace XenoAtom.Collections;
-
-
-public interface ICollectionBatchOutput<T>
-{
-    ref T UnsafeGetBatch(int additionalCount, int marginCount);
-}
-
 
 /// <summary>
 /// Lightweight struct list with optimized behavior over <see cref="List{T}"/>:
@@ -27,7 +22,7 @@ public interface ICollectionBatchOutput<T>
 /// </summary>
 /// <typeparam name="T">Type of an item</typeparam>
 [DebuggerTypeProxy(typeof(UnsafeList<>.DebugListView)), DebuggerDisplay("Count = {_count}")]
-public struct UnsafeList<T> : IEnumerable<T>, ICollectionBatchOutput<T>
+public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
 {
     private const int DefaultCapacity = 4;
     private T[] _items;
@@ -43,10 +38,10 @@ public struct UnsafeList<T> : IEnumerable<T>, ICollectionBatchOutput<T>
         _items = capacity == 0 ? Array.Empty<T>() : new T[capacity];
     }
 
-    public UnsafeList(T[] items, int count)
+    public UnsafeList(T[] items)
     {
         _items = items;
-        _count = count;
+        _count = items.Length;
     }
     
     public readonly int Count => _count;
@@ -78,7 +73,11 @@ public struct UnsafeList<T> : IEnumerable<T>, ICollectionBatchOutput<T>
         _count = count;
     }
 
-    public ref T UnsafeFirstRef => ref MemoryMarshal.GetArrayDataReference(_items);
+    public readonly ref T UnsafeFirstRef
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => ref MemoryMarshal.GetArrayDataReference(_items);
+    }
 
     public readonly Span<T> AsSpan() => new(_items, 0, (int)_count);
 
@@ -103,14 +102,11 @@ public struct UnsafeList<T> : IEnumerable<T>, ICollectionBatchOutput<T>
         return new UnsafeList<T>() { _count = _count, _items = items };
     }
 
-    public readonly bool Contains(T item)
-    {
-        return _count > 0 && IndexOf(item) >= 0;
-    }
+    public readonly bool Contains(T item) => _count > 0 && IndexOf(item) >= 0;
 
     public readonly void CopyTo(T[] array, int arrayIndex)
     {
-        if (array == null) throw new ArgumentNullException(nameof(array));
+        ArgumentNullException.ThrowIfNull(array);
         if (_count > 0)
         {
             System.Array.Copy(_items, 0, array, arrayIndex, _count);
@@ -184,13 +180,16 @@ public struct UnsafeList<T> : IEnumerable<T>, ICollectionBatchOutput<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Insert(int index, T item)
     {
-        if (_count == _items.Length)
+        if ((uint)index > (uint)_count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
+
+        var count = _count;
+        if (count == _items.Length)
         {
-            EnsureCapacity(_count + 1);
+            EnsureCapacity(count + 1);
         }
-        if (index < _count)
+        if (index < count)
         {
-            Array.Copy(_items, index, _items, index + 1, _count - index);
+            Array.Copy(_items, index, _items, index + 1, count - index);
         }
         _items[index] = item;
         _count++;
@@ -199,13 +198,16 @@ public struct UnsafeList<T> : IEnumerable<T>, ICollectionBatchOutput<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void InsertByRef(int index, in T item)
     {
-        if (_count == _items.Length)
+        if ((uint)index > (uint)_count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
+
+        var count = _count;
+        if (count == _items.Length)
         {
-            EnsureCapacity(_count + 1);
+            EnsureCapacity(count + 1);
         }
-        if (index < _count)
+        if (index < count)
         {
-            Array.Copy(_items, index, _items, index + 1, _count - index);
+            Array.Copy(_items, index, _items, index + 1, count - index);
         }
         _items[index] = item;
         _count++;
@@ -222,16 +224,12 @@ public struct UnsafeList<T> : IEnumerable<T>, ICollectionBatchOutput<T>
         return false;
     }
 
-    public readonly int IndexOf(T element)
-    {
-        return Array.IndexOf(_items, element, 0, (int)_count);
-    }
+    public readonly int IndexOf(T element) => Array.IndexOf(_items, element, 0, (int)_count);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RemoveAt(int index)
     {
-        //Throw
-        if (index >= _count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
+        if ((uint)index >= (uint)_count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
         _count--;
         if (index < _count)
         {
@@ -243,14 +241,13 @@ public struct UnsafeList<T> : IEnumerable<T>, ICollectionBatchOutput<T>
             _items[_count] = default!;
         }
     }
-
-
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T RemoveAtAndGet(int index)
     {
-        //Throw
-        if (index >= _count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
+        if ((uint)index >= (uint)_count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
         _count--;
+
         // previous children
         var item = _items[index];
         if (index < _count)
@@ -266,17 +263,15 @@ public struct UnsafeList<T> : IEnumerable<T>, ICollectionBatchOutput<T>
 
     public T RemoveLast()
     {
-        if (_count > 0)
+        if (_count == 0) ThrowHelper.ThrowInvalidOperationRemoveOnEmptyList();
+
+        _count--;
+        ref var removed = ref _items[_count];
+        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
         {
-            _count--;
-            ref var removed = ref _items[_count];
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-            {
-                removed = default!;
-            }
-            return removed;
+            removed = default!;
         }
-        return default!;
+        return removed;
     }
 
     public ref T this[nint index]
@@ -299,13 +294,21 @@ public struct UnsafeList<T> : IEnumerable<T>, ICollectionBatchOutput<T>
 
     public readonly ref T Peek()
     {
+        if (_count == 0) ThrowHelper.ThrowInvalidOperationPeekOnEmptyList();
         return ref _items[_count - 1];
     }
 
-    public T Pop()
+    public T Pop() => RemoveAtAndGet(_count - 1);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ref T UnsafeGetBatch(int addCount, int marginCount)
     {
-        return RemoveAtAndGet(_count - 1);
+        var count = _count;
+        Capacity = _count + addCount + marginCount;
+        _count = count + addCount;
+        return ref UnsafeGetRefAt(count);
     }
+
 
     private void EnsureCapacity(int min)
     {
@@ -326,20 +329,11 @@ public struct UnsafeList<T> : IEnumerable<T>, ICollectionBatchOutput<T>
         }
     }
 
-    public Enumerator GetEnumerator()
-    {
-        return new Enumerator(this);
-    }
+    public Enumerator GetEnumerator() => new(this);
 
-    IEnumerator<T> IEnumerable<T>.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
+    IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
 
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public struct Enumerator : IEnumerator<T>
     {
@@ -389,14 +383,10 @@ public struct UnsafeList<T> : IEnumerable<T>, ICollectionBatchOutput<T>
         }
     }
 
-    private sealed class DebugListView
+    [ExcludeFromCodeCoverage]
+    private sealed class DebugListView(UnsafeList<T> collection)
     {
-        private readonly UnsafeList<T> _collection;
-
-        public DebugListView(in UnsafeList<T> collection)
-        {
-            this._collection = collection;
-        }
+        private readonly UnsafeList<T> _collection = collection;
 
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
         public T[] Items
@@ -408,14 +398,5 @@ public struct UnsafeList<T> : IEnumerable<T>, ICollectionBatchOutput<T>
                 return array;
             }
         }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ref T UnsafeGetBatch(int addCount, int marginCount)
-    {
-        var count = _count;
-        Capacity = _count + addCount + marginCount;
-        _count = count + addCount;
-        return ref UnsafeGetRefAt(count);
     }
 }

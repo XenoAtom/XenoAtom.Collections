@@ -143,24 +143,29 @@ internal static class ThrowHelper
     {
         throw new ArgumentException("Target array type is not compatible with the type of items in the collection.");
     }
+
+    [DoesNotReturn]
+    public static void ThrowInvalidOperationPeekOnEmptyList()
+    {
+        throw new InvalidOperationException("Cannot peek an element from an empty list");
+    }
+
+    [DoesNotReturn]
+    public static void ThrowInvalidOperationRemoveOnEmptyList()
+    {
+        throw new InvalidOperationException("Cannot remove an element from an empty list");
+    }
 }
 
 internal enum ExceptionArgument
 {
-    name,
-    parent,
     index,
-    element,
-    item,
     array,
-    value,
-    builder,
     capacity,
     dictionary,
     collection,
     key,
     min,
-    Arg_ArrayPlusOffTooSmall,
-    other,
-    match
+    match,
+    count
 }
