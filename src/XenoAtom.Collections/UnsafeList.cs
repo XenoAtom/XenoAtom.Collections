@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -22,7 +23,7 @@ namespace XenoAtom.Collections;
 /// </summary>
 /// <typeparam name="T">Type of an item</typeparam>
 [DebuggerTypeProxy(typeof(UnsafeList<>.DebugListView)), DebuggerDisplay("Count = {_count}")]
-public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
+public partial struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
 {
     private const int DefaultCapacity = 4;
     private T[] _items;
@@ -86,14 +87,11 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Clear()
     {
-        if (_count > 0)
+        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
         {
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-            {
-                Array.Clear(_items, 0, (int)_count);
-            }
-            _count = 0;
+            Array.Clear(_items, 0, (int)_count);
         }
+        _count = 0;
     }
 
     public readonly UnsafeList<T> Clone()
@@ -103,6 +101,11 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
     }
 
     public readonly bool Contains(T item) => _count > 0 && IndexOf(item) >= 0;
+
+    public readonly void CopyTo(Span<T> array)
+    {
+        AsSpan().CopyTo(array);
+    }
 
     public readonly void CopyTo(T[] array, int arrayIndex)
     {
@@ -134,7 +137,7 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
         if ((uint)count < (uint)items.Length)
         {
             _count = count + 1;
-            items[count] = item;
+            Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), count) = item;
         }
         else
         {
@@ -147,20 +150,20 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
     {
         var count = _count;
         EnsureCapacity(count + 1);
-        _items[count] = item;
+        UnsafeGetRefAt(count) = item;
         _count = count + 1;
     }
 
-    public ref T UnsafeGetOrCreate(int index)
+    public ref T UnsafeGetOrCreate(nint index)
     {
         if (index >= _count)
         {
             var newCount = index + 1;
             EnsureCapacity(newCount);
-            _count = newCount;
+            _count = (int)newCount;
         }
 
-        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_items), index);
+        return ref UnsafeGetRefAt(index);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -173,12 +176,12 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
             EnsureCapacity(count + 1);
             items = _items;
         }
-        items[count] = item;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), count) = item;
         _count = count + 1;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Insert(int index, T item)
+    public void Insert(nint index, T item)
     {
         if ((uint)index > (uint)_count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
 
@@ -191,12 +194,12 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
         {
             Array.Copy(_items, index, _items, index + 1, count - index);
         }
-        _items[index] = item;
+        UnsafeGetRefAt(index) = item;
         _count++;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void InsertByRef(int index, in T item)
+    public void InsertByRef(nint index, in T item)
     {
         if ((uint)index > (uint)_count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
 
@@ -209,7 +212,7 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
         {
             Array.Copy(_items, index, _items, index + 1, count - index);
         }
-        _items[index] = item;
+        UnsafeGetRefAt(index) = item;
         _count++;
     }
 
@@ -241,7 +244,7 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
     public readonly int IndexOf(T element) => Array.IndexOf(_items, element, 0, (int)_count);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void RemoveAt(int index)
+    public void RemoveAt(nint index)
     {
         if ((uint)index >= (uint)_count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
         _count--;
@@ -252,25 +255,25 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
 
         if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
         {
-            _items[_count] = default!;
+            UnsafeGetRefAt(_count) = default!;
         }
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T RemoveAtAndGet(int index)
+    public T RemoveAtAndGet(nint index)
     {
         if ((uint)index >= (uint)_count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
         _count--;
 
         // previous children
-        var item = _items[index];
+        var item = UnsafeGetRefAt(index);
         if (index < _count)
         {
             Array.Copy(_items, index + 1, _items, index, _count - index);
         }
         if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
         {
-            _items[_count] = default!;
+            UnsafeGetRefAt(_count) = default!;
         }
         return item;
     }
@@ -280,7 +283,7 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
         if (_count == 0) ThrowHelper.ThrowInvalidOperationRemoveOnEmptyList();
 
         _count--;
-        ref var removed = ref _items[_count];
+        ref var removed = ref UnsafeGetRefAt(_count);
         if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
         {
             removed = default!;
@@ -294,12 +297,12 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
         get
         {
             if ((uint)index >= (uint)_count) ThrowHelper.ThrowIndexOutOfRangeException(index);
-            return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_items), (IntPtr)index);
+            return ref UnsafeGetRefAt(index);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly ref T UnsafeGetRefAt(int index) => ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_items), (IntPtr)index);
+    public readonly ref T UnsafeGetRefAt(nint index) => ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_items), index);
 
     public void Push(T element)
     {
@@ -309,7 +312,7 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
     public readonly ref T Peek()
     {
         if (_count == 0) ThrowHelper.ThrowInvalidOperationPeekOnEmptyList();
-        return ref _items[_count - 1];
+        return ref UnsafeGetRefAt(_count - 1);
     }
 
     public T Pop() => RemoveAtAndGet(_count - 1);
@@ -324,12 +327,12 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
     }
 
 
-    private void EnsureCapacity(int min)
+    private void EnsureCapacity(nint min)
     {
         var items = _items;
         if (items.Length < min)
         {
-            int num = (items.Length == 0) ? DefaultCapacity : items.Length << 1;
+            nint num = (items.Length == 0) ? DefaultCapacity : items.Length << 1;
             if (num < min)
             {
                 num = min;
@@ -352,7 +355,7 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
     public struct Enumerator : IEnumerator<T>
     {
         private readonly UnsafeList<T> _list;
-        private int _index;
+        private nint _index;
         private T _current;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -376,7 +379,7 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
         {
             if (_index < _list._count)
             {
-                _current = _list[_index];
+                _current = _list.UnsafeGetRefAt(_index);
                 _index++;
                 return true;
             }
@@ -408,7 +411,7 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
             get
             {
                 var array = new T[this._collection._count];
-                _collection.CopyTo(array, 0);
+                _collection.CopyTo(array);
                 return array;
             }
         }

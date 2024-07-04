@@ -11,11 +11,27 @@
 
   <ItemGroup>
     <PackageReference Include="MSTest" Version="3.*" />
-    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting"/>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\XenoAtom.Collections\XenoAtom.Collections.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="UnsafeListTests.gen.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>UnsafeListTests.gen.cs</LastGenOutput>
+    </None>
+    <Compile Update="UnsafeListTests.gen.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>UnsafeListTests.gen.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
 </Project>

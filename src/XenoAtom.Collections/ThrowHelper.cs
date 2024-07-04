@@ -155,6 +155,12 @@ internal static class ThrowHelper
     {
         throw new InvalidOperationException("Cannot remove an element from an empty list");
     }
+
+    [DoesNotReturn]
+    public static void ThrowListFullInvalidOperationException()
+    {
+        throw new InvalidOperationException("The list is full");
+    }
 }
 
 internal enum ExceptionArgument

@@ -1,3 +1,9 @@
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
 // Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
@@ -7,21 +13,23 @@ using System.Collections;
 namespace XenoAtom.Collections.Tests;
 
 
+<# foreach(var i in new int[] {0, 8, 16, 32, 64, 128, 256, 512, 1024}) { string postFix = i == 0 ? "" : $"N{i}"; string arrayType = "UnsafeList<int>" + (i == 0 ? "" : $".N{i}"); #>
+
 [TestClass]
-public class UnsafeListTests
+public class UnsafeListTests<#=postFix#>
 {
     [TestMethod]
     public void TestSimple()
     {
-        var list = new UnsafeList<int>(4);
+        var list = new <#=arrayType#>();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 0 : i#>, list.Capacity);
         list.Add(1);
         list.Add(2);
         list.Add(3);
         list.Add(4);
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 4 : i#>, list.Capacity);
         Assert.AreEqual(1, list[0]);
         Assert.AreEqual(2, list[1]);
         Assert.AreEqual(3, list[2]);
@@ -30,21 +38,21 @@ public class UnsafeListTests
         Assert.AreEqual(5, list[0]);
         list.Clear();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 4 : i#>, list.Capacity);
     }
 
     [TestMethod]
     public void TestSimpleWithString()
     {
-        var list = new UnsafeList<string>(4);
+        var list = new <#=arrayType.Replace("int","string")#>();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 0 : i#>, list.Capacity);
         list.Add("1");
         list.Add("2");
         list.Add("3");
         list.Add("4");
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 4 : i#>, list.Capacity);
         Assert.AreEqual("1", list[0]);
         Assert.AreEqual("2", list[1]);
         Assert.AreEqual("3", list[2]);
@@ -53,75 +61,64 @@ public class UnsafeListTests
         Assert.AreEqual("5", list[0]);
         list.Clear();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
     }
 
     [TestMethod]
     public void TestResize()
     {
-        var list = new UnsafeList<int>(4);
+        var list = new <#=arrayType#>();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 0 : i#>, list.Capacity);
         list.Add(1);
         list.Add(2);
         list.Add(3);
         list.Add(4);
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.Add(5);
         Assert.AreEqual(5, list.Count);
-        Assert.AreEqual(8, list.Capacity);
         Assert.AreEqual(5, list[4]);
     }
 
     [TestMethod]
     public void TestResizeWithString()
     {
-        var list = new UnsafeList<string>(4);
+        var list = new <#=arrayType.Replace("int","string")#>();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 0 : i#>, list.Capacity);
         list.Add("1");
         list.Add("2");
         list.Add("3");
         list.Add("4");
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.Add("5");
         Assert.AreEqual(5, list.Count);
-        Assert.AreEqual(8, list.Capacity);
         Assert.AreEqual("5", list[4]);
     }
 
     [TestMethod]
     public void TestResizeWithZeroCapacity()
     {
-        var list = new UnsafeList<int>(0);
+        var list = new <#=arrayType#>();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(0, list.Capacity);
         list.Add(1);
         Assert.AreEqual(1, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.Add(2);
         Assert.AreEqual(2, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.Add(3);
         Assert.AreEqual(3, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.Add(4);
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.Add(5);
         Assert.AreEqual(5, list.Count);
-        Assert.AreEqual(8, list.Capacity);
         Assert.AreEqual(5, list[4]);
     }
 
     [TestMethod]
     public void TestRemove()
     {
-        var list = new UnsafeList<int>(4);
+        var list = new <#=arrayType#>();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 0 : i#>, list.Capacity);
         list.Add(1);
         list.Add(2);
         list.Add(3);
@@ -129,114 +126,99 @@ public class UnsafeListTests
 
         Assert.IsFalse(list.Remove(5));
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 4 : i#>, list.Capacity);
         Assert.IsTrue(list.Remove(2));
         Assert.AreEqual(3, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual(1, list[0]);
         Assert.AreEqual(3, list[1]);
         Assert.AreEqual(4, list[2]);
         Assert.IsTrue(list.Remove(1));
         Assert.AreEqual(2, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual(3, list[0]);
         Assert.AreEqual(4, list[1]);
         Assert.IsTrue(list.Remove(4));
         Assert.AreEqual(1, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual(3, list[0]);
         Assert.IsTrue(list.Remove(3));
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
     }
 
     [TestMethod]
     public void TestRemoveString()
     {
-        var list = new UnsafeList<string>(4);
+        var list = new <#=arrayType.Replace("int","string")#>();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 0 : i#>, list.Capacity);
         list.Add("1");
         list.Add("2");
         list.Add("3");
         list.Add("4");
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 4 : i#>, list.Capacity);
         list.Remove("2");
         Assert.AreEqual(3, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual("1", list[0]);
         Assert.AreEqual("3", list[1]);
         Assert.AreEqual("4", list[2]);
         list.Remove("1");
         Assert.AreEqual(2, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual("3", list[0]);
         Assert.AreEqual("4", list[1]);
         list.Remove("4");
         Assert.AreEqual(1, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual("3", list[0]);
         list.Remove("3");
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
     }
 
     [TestMethod]
     public void TestRemoveAt()
     {
-        var list = new UnsafeList<int>(4);
+        var list = new <#=arrayType#>();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.Add(1);
         list.Add(2);
         list.Add(3);
         list.Add(4);
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.RemoveAt(2);
         Assert.AreEqual(3, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual(1, list[0]);
         Assert.AreEqual(2, list[1]);
         Assert.AreEqual(4, list[2]);
         list.RemoveAt(0);
         Assert.AreEqual(2, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual(2, list[0]);
         Assert.AreEqual(4, list[1]);
         list.RemoveAt(1);
         Assert.AreEqual(1, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual(2, list[0]);
         list.RemoveAt(0);
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
     }
 
     [TestMethod]
     public void TestInsert()
     {
-        var list = new UnsafeList<int>(4);
+        var list = new <#=arrayType#>();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.Add(1);
         list.Add(2);
         list.Add(3);
         list.Add(4);
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 4 : i#>, list.Capacity);
         list.Insert(2, 5);
         Assert.AreEqual(5, list.Count);
-        Assert.AreEqual(8, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 8 : i#>, list.Capacity);
     }
 
     [TestMethod]
     public void TestIndexOf()
     {
-        var list = new UnsafeList<int>(4);
+        var list = new <#=arrayType#>();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 0 : i#>, list.Capacity);
         list.Add(1);
         list.Add(2);
         list.Add(3);
@@ -251,9 +233,8 @@ public class UnsafeListTests
     [TestMethod]
     public void TestContains()
     {
-        var list = new UnsafeList<int>(4);
+        var list = new <#=arrayType#>();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.Add(1);
         list.Add(2);
         list.Add(3);
@@ -266,25 +247,26 @@ public class UnsafeListTests
     [TestMethod]
     public void TestCopyTo()
     {
-        var list = new UnsafeList<int>(4);
-        Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        var list = new <#=arrayType#>();
         list.Add(1);
         list.Add(2);
         list.Add(3);
         list.Add(4);
         CollectionAssert.AreEqual(new[] { 1, 2, 3, 4 }, list.ToArray());
+        <# if (i == 0) { #>
         var array = new int[4];
         list.CopyTo(array, 0);
         CollectionAssert.AreEqual(new[] { 1, 2, 3, 4 }, array);
+        <#}#>
+        var array2 = new int[4];
+        list.CopyTo(array2);
+        CollectionAssert.AreEqual(new[] { 1, 2, 3, 4 }, array2);
     }
 
     [TestMethod]
     public void TestEnumerator()
     {
-        var list = new UnsafeList<int>(4);
-        Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        var list = new <#=arrayType#>();
         list.Add(1);
         list.Add(2);
         list.Add(3);
@@ -301,9 +283,7 @@ public class UnsafeListTests
     [TestMethod]
     public void TestEnumeratorGeneric()
     {
-        var list = new UnsafeList<int>(4);
-        Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        var list = new <#=arrayType#>();
         list.Add(1);
         list.Add(2);
         list.Add(3);
@@ -320,9 +300,7 @@ public class UnsafeListTests
     [TestMethod]
     public void TestEnumeratorNonGeneric()
     {
-        var list = new UnsafeList<int>(4);
-        Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        var list = new <#=arrayType#>();
         list.Add(1);
         list.Add(2);
         list.Add(3);
@@ -339,9 +317,7 @@ public class UnsafeListTests
     [TestMethod]
     public void TestEnumeratorNonGeneric2()
     {
-        var list = new UnsafeList<int>(4);
-        Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        var list = new <#=arrayType#>();
         list.Add(1);
         list.Add(2);
         list.Add(3);
@@ -359,9 +335,7 @@ public class UnsafeListTests
     [TestMethod]
     public void TestRemoveAtAndGet()
     {
-        var list = new UnsafeList<int>(4);
-        Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        var list = new <#=arrayType#>();
         list.Add(1);
         list.Add(2);
         list.Add(3);
@@ -375,9 +349,7 @@ public class UnsafeListTests
     [TestMethod]
     public void TestRemoveAtAndGetString()
     {
-        var list = new UnsafeList<string>(4);
-        Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        var list = new <#=arrayType.Replace("int","string")#>();
         list.Add("1");
         list.Add("2");
         list.Add("3");
@@ -391,9 +363,7 @@ public class UnsafeListTests
     [TestMethod]
     public void TestInsertByRef()
     {
-        var list = new UnsafeList<int>(2);
-        Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(2, list.Capacity);
+        var list = new <#=arrayType#>();
         int item = 1;
         list.InsertByRef(0, item);
         item = 2;
@@ -403,7 +373,6 @@ public class UnsafeListTests
         item = 4;
         list.InsertByRef(3, item);
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual(3, list[0]);
         Assert.AreEqual(2, list[1]);
         Assert.AreEqual(1, list[2]);
@@ -413,9 +382,8 @@ public class UnsafeListTests
     [TestMethod]
     public void TestInsertByRefWithString()
     {
-        var list = new UnsafeList<string>(4);
+        var list = new <#=arrayType.Replace("int","string")#>();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         string item = "1";
         list.InsertByRef(0, item);
         item = "2";
@@ -425,7 +393,6 @@ public class UnsafeListTests
         item = "4";
         list.InsertByRef(3, item);
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual("3", list[0]);
         Assert.AreEqual("2", list[1]);
         Assert.AreEqual("1", list[2]);
@@ -435,51 +402,47 @@ public class UnsafeListTests
     [TestMethod]
     public void TestPushPeekPop()
     {
-        var list = new UnsafeList<int>(4);
-        Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        var list = new <#=arrayType#>();
         list.Push(1);
         list.Push(2);
         list.Push(3);
         list.Push(4);
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 4 : i#>, list.Capacity);
         Assert.AreEqual(4, list.Peek());
         Assert.AreEqual(4, list.Pop());
         Assert.AreEqual(3, list.Pop());
         Assert.AreEqual(2, list.Pop());
         Assert.AreEqual(1, list.Pop());
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 4 : i#>, list.Capacity);
     }
 
     [TestMethod]
     public void TestPushPeekPopString()
     {
-        var list = new UnsafeList<string>(4);
+        var list = new <#=arrayType.Replace("int","string")#>();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.Push("1");
         list.Push("2");
         list.Push("3");
         list.Push("4");
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 4 : i#>, list.Capacity);
         Assert.AreEqual("4", list.Peek());
         Assert.AreEqual("4", list.Pop());
         Assert.AreEqual("3", list.Pop());
         Assert.AreEqual("2", list.Pop());
         Assert.AreEqual("1", list.Pop());
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 4 : i#>, list.Capacity);
     }
 
     [TestMethod]
     public void TestAddByRef()
     {
-        var list = new UnsafeList<int>();
+        var list = new <#=arrayType#>();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(0, list.Capacity);
         int item = 1;
         list.AddByRef(item);
         item = 2;
@@ -498,7 +461,7 @@ public class UnsafeListTests
     [TestMethod]
     public void TestAsSpan()
     {
-        var list = new UnsafeList<int>(4);
+        var list = new <#=arrayType#>();
         Assert.AreEqual(0, list.AsSpan().Length);
         list.Add(1);
         list.Add(2);
@@ -521,7 +484,7 @@ public class UnsafeListTests
     [TestMethod]
     public void TestUnsafeGetRefAt()
     {
-        var list = new UnsafeList<int>(4)
+        var list = new <#=arrayType#>()
         {
             1,
             2,
@@ -537,7 +500,7 @@ public class UnsafeListTests
     [TestMethod]
     public void TestRemoveLast()
     {
-        var list = new UnsafeList<int>(4)
+        var list = new <#=arrayType#>()
         {
             1,
             2,
@@ -545,31 +508,26 @@ public class UnsafeListTests
             4
         };
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.RemoveLast();
         Assert.AreEqual(3, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual(1, list[0]);
         Assert.AreEqual(2, list[1]);
         Assert.AreEqual(3, list[2]);
         list.RemoveLast();
         Assert.AreEqual(2, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual(1, list[0]);
         Assert.AreEqual(2, list[1]);
         list.RemoveLast();
         Assert.AreEqual(1, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual(1, list[0]);
         list.RemoveLast();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
     }
 
     [TestMethod]
     public void TestRemoveLastString()
     {
-        var list = new UnsafeList<string>(4)
+        var list = new <#=arrayType.Replace("int","string")#>()
         {
             "1",
             "2",
@@ -577,31 +535,26 @@ public class UnsafeListTests
             "4"
         };
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.RemoveLast();
         Assert.AreEqual(3, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual("1", list[0]);
         Assert.AreEqual("2", list[1]);
         Assert.AreEqual("3", list[2]);
         list.RemoveLast();
         Assert.AreEqual(2, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual("1", list[0]);
         Assert.AreEqual("2", list[1]);
         list.RemoveLast();
         Assert.AreEqual(1, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual("1", list[0]);
         list.RemoveLast();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
     }
 
     [TestMethod]
     public void TestReset()
     {
-        var list = new UnsafeList<int>(4)
+        var list = new <#=arrayType#>()
         {
             1,
             2,
@@ -609,16 +562,14 @@ public class UnsafeListTests
             4
         };
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.Reset();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
     }
 
     [TestMethod]
     public void TestClear()
     {
-        var list = new UnsafeList<int>(4)
+        var list = new <#=arrayType#>()
         {
             1,
             2,
@@ -626,16 +577,14 @@ public class UnsafeListTests
             4
         };
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.Clear();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
     }
 
     [TestMethod]
     public void TestClearWithString()
     {
-        var list = new UnsafeList<string>(4)
+        var list = new <#=arrayType.Replace("int","string")#>()
         {
             "1",
             "2",
@@ -643,29 +592,28 @@ public class UnsafeListTests
             "4"
         };
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         list.Clear();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
     }
 
+    <# if (i == 0) { #>
     [TestMethod]
     public void TestCapacity()
     {
-        var list = new UnsafeList<int>(4);
+        var list = new <#=arrayType#>(4);
         Assert.AreEqual(4, list.Capacity);
         list.Capacity = 8;
         Assert.AreEqual(8, list.Capacity);
         list.Capacity = 2;
         Assert.AreEqual(8, list.Capacity);
     }
+    <#}#>
 
     [TestMethod]
     public void TestUnsafeGetOrCreate()
     {
-        var list = new UnsafeList<int>(4);
+        var list = new <#=arrayType#>();
         Assert.AreEqual(0, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         ref var item1 = ref list.UnsafeGetOrCreate(0);
         item1 = 1;
         ref var item2 = ref list.UnsafeGetOrCreate(1);
@@ -675,7 +623,6 @@ public class UnsafeListTests
         ref var item4 = ref list.UnsafeGetOrCreate(3);
         item4 = 4;
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual(1, list[0]);
         Assert.AreEqual(2, list[1]);
         Assert.AreEqual(3, list[2]);
@@ -685,20 +632,22 @@ public class UnsafeListTests
     [TestMethod]
     public void TestUnsafeSetCount()
     {
-        var list = new UnsafeList<int>(0);
+        var list = new <#=arrayType#>(<#= i == 0 ? 4 : ""#>);
         list.UnsafeSetCount(4);
         Assert.AreEqual(4, list.Count);
-        Assert.AreEqual(4, list.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 4 : i#> , list.Capacity);
 
+        <# if (i == 0) { #>
         list.UnsafeSetCount(16, 8);
         Assert.AreEqual(8, list.Count);
         Assert.AreEqual(16, list.Capacity);
+        <#}#>
     }
 
     [TestMethod]
     public void TestClone()
     {
-        var list = new UnsafeList<int>(4)
+        var list = new <#=arrayType#>()
         {
             1,
             2,
@@ -707,7 +656,7 @@ public class UnsafeListTests
         };
         var clone = list.Clone();
         Assert.AreEqual(4, clone.Count);
-        Assert.AreEqual(4, clone.Capacity);
+        Assert.AreEqual(<#= i == 0 ? 4 : i#>, clone.Capacity);
         Assert.AreEqual(1, clone[0]);
         Assert.AreEqual(2, clone[1]);
         Assert.AreEqual(3, clone[2]);
@@ -719,14 +668,14 @@ public class UnsafeListTests
     [TestMethod]
     public void TestIsReadOnly()
     {
-        var list = new UnsafeList<int>(4);
+        var list = new <#=arrayType#>();
         Assert.IsFalse(list.IsReadOnly);
     }
 
     [TestMethod]
     public void TestUnsafeFirstRef()
     {
-        var list = new UnsafeList<int>(4)
+        var list = new <#=arrayType#>()
         {
             1,
             2,
@@ -742,7 +691,7 @@ public class UnsafeListTests
     [TestMethod]
     public void TestArgumentExceptions()
     {
-        var list = new UnsafeList<int>(4);
+        var list = new <#=arrayType#>();
         Assert.ThrowsException<ArgumentOutOfRangeException>(() => list.RemoveAt(0));
         Assert.ThrowsException<ArgumentOutOfRangeException>(() => list.RemoveAt(1));
         Assert.ThrowsException<ArgumentOutOfRangeException>(() => list.RemoveAt(-1));
@@ -763,10 +712,11 @@ public class UnsafeListTests
         Assert.ThrowsException<ArgumentOutOfRangeException>(() => list.Pop());
     }
 
+    <# if (i == 0) { #>
     [TestMethod]
     public void TestConstructorWithArray()
     {
-        var list = new UnsafeList<int>([1, 2, 3, 4]);
+        var list = new <#=arrayType#>([1, 2, 3, 4]);
         Assert.AreEqual(4, list.Count);
         Assert.AreEqual(4, list.Capacity);
         Assert.AreEqual(1, list[0]);
@@ -778,18 +728,19 @@ public class UnsafeListTests
     [TestMethod]
     public void TestUnsafeGetBatch()
     {
-        var list = new UnsafeList<int>();
+        var list = new <#=arrayType#>();
         ref var firstItem = ref list.UnsafeGetBatch(2, 3);
         Assert.AreEqual(2, list.Count);
         Assert.AreEqual(5, list.Capacity);
         firstItem = 1;
         Assert.AreEqual(1, list[0]);
     }
+    <#}#>
 
     [TestMethod]
     public void TestSort()
     {
-        var list = new UnsafeList<int>(4)
+        var list = new <#=arrayType#>()
         {
             4,
             3,
@@ -806,7 +757,7 @@ public class UnsafeListTests
     [TestMethod]
     public void TestSortStringWithComparer()
     {
-        var list = new UnsafeList<string>(4)
+        var list = new <#=arrayType.Replace("int","string")#>()
         {
             "4",
             "3",
@@ -824,7 +775,7 @@ public class UnsafeListTests
     [TestMethod]
     public void TestSortByRef()
     {
-        var list = new UnsafeList<int>(4)
+        var list = new <#=arrayType#>()
         {
             4,
             3,
@@ -843,3 +794,4 @@ public class UnsafeListTests
         public bool LessThan(in int left, in int right) => left.CompareTo(right) < 0;
     }
 }
+<#}#>
