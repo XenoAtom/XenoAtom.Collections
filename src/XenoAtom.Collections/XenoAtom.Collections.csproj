@@ -5,8 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>true</IsPackable>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
-    <PublishAot>true</PublishAot>
     <!-- Enable AOT analyzers -->
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
@@ -25,7 +25,6 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
