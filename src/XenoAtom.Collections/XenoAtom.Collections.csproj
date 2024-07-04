@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+
+    <PublishAot>true</PublishAot>
+    <!-- Enable AOT analyzers -->
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Description>This is a default project description</Description>
+    <Copyright>Alexandre Mutel</Copyright>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Authors>Alexandre Mutel</Authors>
+    <PackageTags>collections;list;dictionary</PackageTags>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
+    <PackageIcon>XenoAtom.Collections.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/XenoAtom/XenoAtom.Collections</PackageProjectUrl>
+    <PackageLicenseExpression>BSD-2-Clause</PackageLicenseExpression>
+    <!--Add support for sourcelink-->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)../../img/XenoAtom.Collections.png" Pack="true" PackagePath="/" />
+    <None Include="$(MSBuildThisFileDirectory)../../readme.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="5.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>
