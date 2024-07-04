@@ -9,6 +9,8 @@ namespace XenoAtom.Collections.Tests;
 [TestClass]
 public class UnsafeHashSetTests
 {
+    // TODO: Add more tests
+    
     [TestMethod]
     public void TestAdd()
     {
@@ -87,5 +89,18 @@ public class UnsafeHashSetTests
         Assert.IsTrue(set.Contains(1));
         set.Remove(1);
         Assert.IsFalse(set.Contains(1));
+    }
+
+    [TestMethod]
+    public void TestMultipleAdds()
+    {
+        var set = new UnsafeHashSet<int>();
+        for (int i = 0; i < 1000; i++)
+        {
+            Assert.IsTrue(set.Add(i));
+            Assert.IsFalse(set.Add(i));
+            Assert.IsTrue(set.Contains(i));
+        }
+        Assert.AreEqual(1000, set.Count);
     }
 }

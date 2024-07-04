@@ -11,6 +11,11 @@ using System.Runtime.InteropServices;
 
 namespace XenoAtom.Collections;
 
+/// <summary>
+/// Implements a dictionary requiring the key to be <see cref="IEquatable{T}"/> for fast lookup.
+/// </summary>
+/// <typeparam name="TKey">The type of the key.</typeparam>
+/// <typeparam name="TValue">The type of the value.</typeparam>
 [DebuggerTypeProxy(typeof(UnsafeDictionary<,>.IDictionaryDebugView))]
 [DebuggerDisplay("Count = {Count}")]
 public struct UnsafeDictionary<TKey, TValue> : IDictionary<TKey, TValue> where TKey : IEquatable<TKey>

@@ -224,6 +224,20 @@ public struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
         return false;
     }
 
+    public void Sort(Comparison<T> comparison) => AsSpan().Sort(comparison);
+
+    public void Sort<TComparer>() where TComparer : IComparer<T>, new() => Sort(new TComparer());
+    
+    public void Sort<TComparer>(TComparer comparer) where TComparer : IComparer<T>
+    {
+        AsSpan().Sort(comparer);
+    }
+
+    public void SortByRef<TComparer>(in TComparer comparer) where TComparer : struct, IComparerByRef<T>
+    {
+        AsSpan().SortByRef(comparer);
+    }
+
     public readonly int IndexOf(T element) => Array.IndexOf(_items, element, 0, (int)_count);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

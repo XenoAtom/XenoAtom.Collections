@@ -17,13 +17,13 @@ public static class SpanSortExtensions
     internal const int IntrosortSizeThreshold = 16;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Sort<T, TComparer>(this T[] keys, in TComparer comparer) where TComparer : struct, IComparerByRef<T>
+    public static void SortByRef<T, TComparer>(this T[] keys, in TComparer comparer) where TComparer : struct, IComparerByRef<T>
     {
         SortHelperByRef<T, TComparer>.Sort(keys, comparer);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Sort<T, TComparer>(this Span<T> keys, in TComparer comparer) where TComparer : struct, IComparerByRef<T>
+    public static void SortByRef<T, TComparer>(this Span<T> keys, in TComparer comparer) where TComparer : struct, IComparerByRef<T>
     {
         SortHelperByRef<T, TComparer>.Sort(keys, comparer);
     }

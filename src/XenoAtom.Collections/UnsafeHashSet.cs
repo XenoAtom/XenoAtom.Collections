@@ -9,6 +9,10 @@ using System.Runtime.CompilerServices;
 
 namespace XenoAtom.Collections;
 
+/// <summary>
+/// Implements a HashSet requiring the element to implement <see cref="IEquatable{T}"/> for fast lookup.
+/// </summary>
+/// <typeparam name="T">The type of the element.</typeparam>
 [DebuggerTypeProxy(typeof(UnsafeHashSet<>.DebugHashSetView))]
 [DebuggerDisplay("Count = {Count}")]
 [Serializable]

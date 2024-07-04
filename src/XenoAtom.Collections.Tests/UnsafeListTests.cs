@@ -785,4 +785,61 @@ public class UnsafeListTests
         firstItem = 1;
         Assert.AreEqual(1, list[0]);
     }
+
+    [TestMethod]
+    public void TestSort()
+    {
+        var list = new UnsafeList<int>(4)
+        {
+            4,
+            3,
+            2,
+            1
+        };
+        list.Sort((left, right) => left.CompareTo(right));
+        Assert.AreEqual(1, list[0]);
+        Assert.AreEqual(2, list[1]);
+        Assert.AreEqual(3, list[2]);
+        Assert.AreEqual(4, list[3]);
+    }
+
+    [TestMethod]
+    public void TestSortStringWithComparer()
+    {
+        var list = new UnsafeList<string>(4)
+        {
+            "4",
+            "3",
+            "2",
+            "1"
+        };
+        list.Sort(StringComparer.Ordinal);
+
+        Assert.AreEqual("1", list[0]);
+        Assert.AreEqual("2", list[1]);
+        Assert.AreEqual("3", list[2]);
+        Assert.AreEqual("4", list[3]);
+    }
+
+    [TestMethod]
+    public void TestSortByRef()
+    {
+        var list = new UnsafeList<int>(4)
+        {
+            4,
+            3,
+            2,
+            1
+        };
+        list.SortByRef(new IntComparerByRef());
+        Assert.AreEqual(1, list[0]);
+        Assert.AreEqual(2, list[1]);
+        Assert.AreEqual(3, list[2]);
+        Assert.AreEqual(4, list[3]);
+    }
+    
+    private struct IntComparerByRef : IComparerByRef<int>
+    {
+        public bool LessThan(in int left, in int right) => left.CompareTo(right) < 0;
+    }
 }
