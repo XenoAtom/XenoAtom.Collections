@@ -2,7 +2,7 @@
 
 <img align="right" width="160px" height="160px" src="https://raw.githubusercontent.com/XenoAtom/XenoAtom.Collections/main/img/XenoAtom.Collections.png">
 
-This library provides struct based collections for high performance and low memory usage. It includes `UnsafeList<T>`, `UnsafeDictionary<TKey, TValue>` and `UnsafeHashSet<T>`. These collections are value types with a backed by a managed array and designed to be used in performance critical scenarios where you want to avoid memory allocations of an additional managed object for the container.
+This .NET library offers structure-based collections optimized for high performance and minimal memory usage. It features `UnsafeList<T>`, `UnsafeDictionary<TKey, TValue>`, and `UnsafeHashSet<T>`. These collections are implemented as value types backed by a managed array, specifically designed for performance-critical scenarios where avoiding additional memory allocations for container objects is essential.
 
 The code has been derived from the .NET Core runtime released under the MIT license.
 
