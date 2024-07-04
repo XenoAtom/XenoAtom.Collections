@@ -11,6 +11,7 @@ The code has been derived from the .NET Core runtime released under the MIT lice
 ## ✨ Features
 
 - 3 collections: `UnsafeList<T>`, `UnsafeDictionary<TKey, TValue>` and `UnsafeHashSet<T>`
+- Faster access for Dictionary and HashSet by requiring the key to be `IEquatable<TKey>`
 - Struct based collections to avoid an allocation for the container and improve locality
 - Proper debugger support for collections with custom `DebuggerDisplay`
 - A few advanced unsafe methods to avoid checks
