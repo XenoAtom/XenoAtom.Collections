@@ -318,15 +318,14 @@ public partial struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
     public T Pop() => RemoveAtAndGet(_count - 1);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ref T UnsafeGetBatch(int addCount, int marginCount)
+    public ref T UnsafeGetBatch(int addCount, int additionalCapacity)
     {
         var count = _count;
-        Capacity = _count + addCount + marginCount;
+        EnsureCapacity(count + addCount + additionalCapacity);
         _count = count + addCount;
         return ref UnsafeGetRefAt(count);
     }
-
-
+    
     private void EnsureCapacity(nint min)
     {
         var items = _items;
