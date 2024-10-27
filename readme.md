@@ -27,7 +27,8 @@ The code has been derived from the .NET Core runtime released under the MIT lice
 - Proper debugger support for collections with custom `DebuggerDisplay`
 - A few advanced unsafe methods to avoid checks
     - e.g `Unsafe<T>.UnsafeSetCount`, `Unsafe<T>.UnsafeGetRefAt`...
-- NativeAOT compatible
+- A fast sort by ref via `Span<T>.SortByRef` that can inline the comparer and avoid the copy to the stack of the value being compared.
+- - NativeAOT compatible
 - `net8.0`+ support
 
 ## 📖 Usage
@@ -100,6 +101,7 @@ Some benchmarks are available in the `src\XenoAtom.Collections.Bench` folder. He
 
 - `UnsafeList<T>` and `UnsafeDictionary<TKey, TValue>` can be up to 20% faster than the standard `List<T>` and `Dictionary<TKey, TValue>` for some scenarios.
 - `UnsafeList<T>.N16` can be up to 50% faster than the standard `List<T>` for adding elements.
+- `Span<T>.SortByRef` can be up to 50% faster than `Array.Sort`/`Span.Sort` for some scenarios.
 
 
 | Method                    | Mean     | Error     | StdDev    | Ratio |
@@ -113,6 +115,21 @@ Some benchmarks are available in the `src\XenoAtom.Collections.Bench` folder. He
 |----------------------------- |---------:|---------:|---------:|------:|
 | `UnsafeDictionary<int, int>` | 44.85 ns | 0.577 ns | 0.539 ns |  0.81 |
 | `Dictionary<int, int>`       | 55.06 ns | 0.307 ns | 0.287 ns |  1.00 |
+
+
+| Method    | ParamSize | Mean         | Error     | StdDev    | Ratio | Gen0   | Allocated | Alloc Ratio |
+|---------- |---------- |-------------:|----------:|----------:|------:|-------:|----------:|------------:|
+| SortByRef | 3         |     6.468 ns | 0.0631 ns | 0.0590 ns |  0.43 |      - |         - |        0.00 |
+| Sort      | 3         |    14.993 ns | 0.0419 ns | 0.0350 ns |  1.00 | 0.0038 |      64 B |        1.00 |
+|           |           |              |           |           |       |        |           |             |
+| SortByRef | 8         |    30.392 ns | 0.1365 ns | 0.1277 ns |  0.75 |      - |         - |        0.00 |
+| Sort      | 8         |    40.525 ns | 0.1555 ns | 0.1379 ns |  1.00 | 0.0038 |      64 B |        1.00 |
+|           |           |              |           |           |       |        |           |             |
+| SortByRef | 16        |    73.797 ns | 0.1232 ns | 0.1092 ns |  0.59 |      - |         - |        0.00 |
+| Sort      | 16        |   125.879 ns | 0.5184 ns | 0.4849 ns |  1.00 | 0.0038 |      64 B |        1.00 |
+|           |           |              |           |           |       |        |           |             |
+| SortByRef | 256       |   870.983 ns | 1.4083 ns | 1.0995 ns |  0.48 |      - |         - |        0.00 |
+| Sort      | 256       | 1,813.291 ns | 8.7028 ns | 8.1406 ns |  1.00 | 0.0038 |      64 B |        1.00 |
 
 
 
