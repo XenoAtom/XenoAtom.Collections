@@ -132,12 +132,12 @@ public partial struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Add(T item)
     {
-        var count = _count;
+        var count = (nint)_count;
         var items = _items;
         if ((uint)count < (uint)items.Length)
         {
-            _count = count + 1;
             Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), count) = item;
+            _count++; // Don't reuse count as it generates another inc instruction on x86_64 and it performs worse than inc [memory]
         }
         else
         {
@@ -169,15 +169,17 @@ public partial struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddByRef(in T item)
     {
-        var count = _count;
+        var count = (nint)_count;
         var items = _items;
-        if (count == items.Length)
+        if ((uint)count < (uint)items.Length)
         {
-            EnsureCapacity(count + 1);
-            items = _items;
+            Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), count) = item;
+            _count++; // Don't reuse count as it generates another inc instruction on x86_64 and it performs worse than inc [memory]
         }
-        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), count) = item;
-        _count = count + 1;
+        else
+        {
+            ResizeAndAdd(item);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
