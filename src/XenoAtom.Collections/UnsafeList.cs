@@ -322,29 +322,42 @@ public partial struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref T UnsafeGetBatch(int addCount, int additionalCapacity)
     {
+        var count = (nint)_count;
+        var items = _items;
+        if (items.Length < count + addCount + additionalCapacity)
+        {
+            return ref SlowUnsafeGetBatch(addCount, additionalCapacity);
+        }
+
+        _count = (int)(count + addCount);
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), count);
+    }
+    
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private ref T SlowUnsafeGetBatch(int addCount, int additionalCapacity)
+    {
         var count = _count;
-        EnsureCapacity(count + addCount + additionalCapacity);
+        var newCapacity = count + addCount + additionalCapacity;
+        EnsureCapacity(newCapacity);
         _count = count + addCount;
         return ref UnsafeGetRefAt(count);
     }
-    
+
     private void EnsureCapacity(nint min)
     {
         var items = _items;
-        if (items.Length < min)
+        Debug.Assert(min > items.Length);
+        nint num = (items.Length == 0) ? DefaultCapacity : items.Length << 1;
+        if (num < min)
         {
-            nint num = (items.Length == 0) ? DefaultCapacity : items.Length << 1;
-            if (num < min)
-            {
-                num = min;
-            }
-            var destinationArray = new T[num];
-            if (_count > 0)
-            {
-                Array.Copy(items, 0, destinationArray, 0, _count);
-            }
-            _items = destinationArray;
+            num = min;
         }
+        var destinationArray = new T[num];
+        if (_count > 0)
+        {
+            Array.Copy(items, 0, destinationArray, 0, _count);
+        }
+        _items = destinationArray;
     }
 
     public Enumerator GetEnumerator() => new(this);
