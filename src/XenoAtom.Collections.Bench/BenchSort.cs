@@ -4,7 +4,6 @@
 
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
-using XenoAtom.Collections;
 
 namespace XenoAtom.Collections.Bench;
 
@@ -17,6 +16,7 @@ public class BenchSort
     public BenchSort()
     {
         _data = Array.Empty<Item>();
+        _copy = Array.Empty<Item>();
     }
 
     public Item[] Data => _data;

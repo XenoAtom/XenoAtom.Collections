@@ -149,21 +149,22 @@ public partial struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
     private void ResizeAndAdd(T item)
     {
         var count = _count;
-        EnsureCapacity(count + 1);
-        UnsafeGetRefAt(count) = item;
+        var items = EnsureCapacity(count + 1);
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), count) = item;
         _count = count + 1;
     }
 
     public ref T UnsafeGetOrCreate(nint index)
     {
+        var items = _items;
         if (index >= _count)
         {
             var newCount = index + 1;
-            EnsureCapacity(newCount);
+            items = EnsureCapacity(newCount);
             _count = (int)newCount;
         }
 
-        return ref UnsafeGetRefAt(index);
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), index);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -185,36 +186,38 @@ public partial struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Insert(nint index, T item)
     {
-        if ((uint)index > (uint)_count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
-
         var count = _count;
-        if (count == _items.Length)
+        if ((uint)index > (uint)count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
+
+        var items = _items;
+        if (count == items.Length)
         {
-            EnsureCapacity(count + 1);
+            items = EnsureCapacity(count + 1);
         }
         if (index < count)
         {
-            Array.Copy(_items, index, _items, index + 1, count - index);
+            Array.Copy(items, index, items, index + 1, count - index);
         }
-        UnsafeGetRefAt(index) = item;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), index) = item;
         _count++;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void InsertByRef(nint index, in T item)
     {
-        if ((uint)index > (uint)_count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
-
         var count = _count;
-        if (count == _items.Length)
+        if ((uint)index > (uint)count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
+
+        var items = _items;
+        if (count == items.Length)
         {
-            EnsureCapacity(count + 1);
+            items = EnsureCapacity(count + 1);
         }
         if (index < count)
         {
-            Array.Copy(_items, index, _items, index + 1, count - index);
+            Array.Copy(items, index, items, index + 1, count - index);
         }
-        UnsafeGetRefAt(index) = item;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), index) = item;
         _count++;
     }
 
@@ -243,41 +246,55 @@ public partial struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
         AsSpan().SortByRef(comparer);
     }
 
-    public readonly int IndexOf(T element) => Array.IndexOf(_items, element, 0, (int)_count);
+    public readonly nint IndexOf(T element) => Array.IndexOf(_items, element, 0, (int)_count);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RemoveAt(nint index)
     {
-        if ((uint)index >= (uint)_count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
-        _count--;
-        if (index < _count)
+        var count = _count;
+
+        if ((uint)index >= (uint)count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
+
+        count--;
+        var items = _items;
+
+        if (index < count)
         {
-            Array.Copy(_items, index + 1, _items, index, _count - index);
+            Array.Copy(items, index + 1, items, index, count - index);
         }
 
         if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
         {
-            UnsafeGetRefAt(_count) = default!;
+            Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), count) = default!;
         }
+
+        _count = count;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T RemoveAtAndGet(nint index)
     {
-        if ((uint)index >= (uint)_count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
-        _count--;
+        var count = _count;
 
-        // previous children
-        var item = UnsafeGetRefAt(index);
-        if (index < _count)
+        if ((uint)index >= (uint)count) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
+
+        count--;
+        var items = _items;
+
+        var element = Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), index);
+
+        if (index < count)
         {
-            Array.Copy(_items, index + 1, _items, index, _count - index);
+            Array.Copy(items, index + 1, items, index, count - index);
         }
+
         if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
         {
-            UnsafeGetRefAt(_count) = default!;
+            Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), count) = default!;
         }
-        return item;
+
+        _count = count;
+        return element;
     }
 
     public T RemoveLast()
@@ -306,44 +323,43 @@ public partial struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly ref T UnsafeGetRefAt(nint index) => ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_items), index);
 
-    public void Push(T element)
-    {
-        Add(element);
-    }
+    public void Push(T element) => Add(element);
 
     public readonly ref T Peek()
     {
-        if (_count == 0) ThrowHelper.ThrowInvalidOperationPeekOnEmptyList();
-        return ref UnsafeGetRefAt(_count - 1);
+        var count = _count;
+        if (count == 0) ThrowHelper.ThrowInvalidOperationPeekOnEmptyList();
+        return ref UnsafeGetRefAt(count - 1);
     }
 
     public T Pop() => RemoveAtAndGet(_count - 1);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ref T UnsafeGetBatch(int addCount, int additionalCapacity)
+    public ref T UnsafeGetBatch(int additionalCount, int marginCount)
     {
-        var count = (nint)_count;
+        var thisCount = (nint)_count;
         var items = _items;
-        if (items.Length < count + addCount + additionalCapacity)
+        var newCapacity = thisCount + additionalCount + marginCount;
+        if (items.Length < newCapacity)
         {
-            return ref SlowUnsafeGetBatch(addCount, additionalCapacity);
+            return ref SlowUnsafeGetBatch(additionalCount, newCapacity);
         }
 
-        _count = (int)(count + addCount);
-        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), count);
-    }
-    
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private ref T SlowUnsafeGetBatch(int addCount, int additionalCapacity)
-    {
-        var count = _count;
-        var newCapacity = count + addCount + additionalCapacity;
-        EnsureCapacity(newCapacity);
-        _count = count + addCount;
-        return ref UnsafeGetRefAt(count);
+        _count = (int)(thisCount + additionalCount);
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), thisCount);
     }
 
-    private void EnsureCapacity(nint min)
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private ref T SlowUnsafeGetBatch(int additionalCount, nint newCapacity)
+    {
+        var thisCount = (nint)_count;
+        var items = EnsureCapacity(newCapacity);
+        _count = (int)(thisCount + additionalCount);
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(items), thisCount);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private T[] EnsureCapacity(nint min)
     {
         var items = _items;
         Debug.Assert(min > items.Length);
@@ -357,7 +373,8 @@ public partial struct UnsafeList<T> : IEnumerable<T>, IUnsafeListBatch<T>
         {
             Array.Copy(items, 0, destinationArray, 0, _count);
         }
-        _items = destinationArray;
+        _items  = items = destinationArray;
+        return items;
     }
 
     public Enumerator GetEnumerator() => new(this);

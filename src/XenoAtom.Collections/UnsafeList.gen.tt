@@ -27,7 +27,7 @@ partial struct UnsafeList<T>
         private <#= array #> _items;
         private int _count;
 
-        public int Capacity => <#= i #>;
+        public readonly int Capacity => <#= i #>;
 
         public readonly int Count => _count;
 

@@ -20,7 +20,7 @@ partial struct UnsafeList<T>
         private FixedArray2 _items;
         private int _count;
 
-        public int Capacity => 2;
+        public readonly int Capacity => 2;
 
         public readonly int Count => _count;
 
@@ -368,7 +368,7 @@ partial struct UnsafeList<T>
         private FixedArray4 _items;
         private int _count;
 
-        public int Capacity => 4;
+        public readonly int Capacity => 4;
 
         public readonly int Count => _count;
 
@@ -716,7 +716,7 @@ partial struct UnsafeList<T>
         private FixedArray8 _items;
         private int _count;
 
-        public int Capacity => 8;
+        public readonly int Capacity => 8;
 
         public readonly int Count => _count;
 
@@ -1064,7 +1064,7 @@ partial struct UnsafeList<T>
         private FixedArray16 _items;
         private int _count;
 
-        public int Capacity => 16;
+        public readonly int Capacity => 16;
 
         public readonly int Count => _count;
 
@@ -1412,7 +1412,7 @@ partial struct UnsafeList<T>
         private FixedArray32 _items;
         private int _count;
 
-        public int Capacity => 32;
+        public readonly int Capacity => 32;
 
         public readonly int Count => _count;
 
@@ -1760,7 +1760,7 @@ partial struct UnsafeList<T>
         private FixedArray64 _items;
         private int _count;
 
-        public int Capacity => 64;
+        public readonly int Capacity => 64;
 
         public readonly int Count => _count;
 
@@ -2108,7 +2108,7 @@ partial struct UnsafeList<T>
         private FixedArray128 _items;
         private int _count;
 
-        public int Capacity => 128;
+        public readonly int Capacity => 128;
 
         public readonly int Count => _count;
 
@@ -2456,7 +2456,7 @@ partial struct UnsafeList<T>
         private FixedArray256 _items;
         private int _count;
 
-        public int Capacity => 256;
+        public readonly int Capacity => 256;
 
         public readonly int Count => _count;
 
@@ -2804,7 +2804,7 @@ partial struct UnsafeList<T>
         private FixedArray512 _items;
         private int _count;
 
-        public int Capacity => 512;
+        public readonly int Capacity => 512;
 
         public readonly int Count => _count;
 
@@ -3152,7 +3152,7 @@ partial struct UnsafeList<T>
         private FixedArray1024 _items;
         private int _count;
 
-        public int Capacity => 1024;
+        public readonly int Capacity => 1024;
 
         public readonly int Count => _count;
 
